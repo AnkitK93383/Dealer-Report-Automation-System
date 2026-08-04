@@ -1,35 +1,41 @@
 import time
-import pandas as pd
+import shutil
 import streamlit as st
 
 from utils.excel_reader import read_excel
 from utils.report_generator import generate_reports
 from utils.email_sender import send_email
 
+
 def show_dashboard():
+
+    # ======================================================
+    # Page Title
+    # ======================================================
 
     st.title("📊 Dealer Automation Dashboard")
 
-    # -------------------------------
-    # Logout Button
-    # -------------------------------
+    # ======================================================
+    # Logout
+    # ======================================================
+
     if st.sidebar.button("🚪 Logout"):
 
         st.session_state.logged_in = False
         st.rerun()
 
     st.write(
-        "Upload your files and send dealer reports."
+        "Upload your distribution file and dealer master to generate dealer-wise reports and send them via email."
     )
 
     st.divider()
 
-    # -------------------------------
+    # ======================================================
     # Upload Files
-    # -------------------------------
+    # ======================================================
 
     sales_file = st.file_uploader(
-        "Upload Files for Distribution",
+        "Upload Distribution File",
         type=["xlsx"]
     )
 
@@ -40,9 +46,9 @@ def show_dashboard():
 
     st.divider()
 
-    # -------------------------------
+    # ======================================================
     # Email Credentials
-    # -------------------------------
+    # ======================================================
 
     sender_email = st.text_input(
         "Sender Gmail"
@@ -53,9 +59,9 @@ def show_dashboard():
         type="password"
     )
 
-    # -------------------------------
-    # Read Uploaded Files
-    # -------------------------------
+    # ======================================================
+    # Read Files
+    # ======================================================
 
     sales_df = None
     dealer_df = None
@@ -66,31 +72,41 @@ def show_dashboard():
     if dealer_file is not None:
         dealer_df = read_excel(dealer_file)
 
-    # -------------------------------
+    # ======================================================
     # Success Messages
-    # -------------------------------
+    # ======================================================
 
     if sales_df is not None:
-        st.success("Distribution File Loaded Successfully")
+        st.success("✅ Distribution File Loaded Successfully")
 
     if dealer_df is not None:
-        st.success("Dealer Details Loaded Successfully")
+        st.success("✅ Dealer Details Loaded Successfully")
 
-    # -------------------------------
-    # Preview Files
-    # -------------------------------
+    # ======================================================
+    # Preview
+    # ======================================================
 
     if sales_df is not None:
-        st.subheader("Distribution Data Preview")
-        st.dataframe(sales_df.head())
+
+        with st.expander("Distribution File Preview"):
+
+            st.dataframe(
+                sales_df.head(),
+                use_container_width=True
+            )
 
     if dealer_df is not None:
-        st.subheader("Dealer Details Preview")
-        st.dataframe(dealer_df.head())
 
-    # -------------------------------
-    # Validate Required Columns
-    # -------------------------------
+        with st.expander("Dealer Details Preview"):
+
+            st.dataframe(
+                dealer_df.head(),
+                use_container_width=True
+            )
+
+    # ======================================================
+    # Validate Columns
+    # ======================================================
 
     required_sales_columns = [
         "Dealer_Code"
@@ -105,15 +121,15 @@ def show_dashboard():
     if sales_df is not None:
 
         missing = [
-            column
-            for column in required_sales_columns
-            if column not in sales_df.columns
+            c
+            for c in required_sales_columns
+            if c not in sales_df.columns
         ]
 
         if missing:
 
             st.error(
-                f"Distribution file is missing: {missing}"
+                f"Distribution File Missing Columns : {missing}"
             )
 
             st.stop()
@@ -121,22 +137,22 @@ def show_dashboard():
     if dealer_df is not None:
 
         missing = [
-            column
-            for column in required_dealer_columns
-            if column not in dealer_df.columns
+            c
+            for c in required_dealer_columns
+            if c not in dealer_df.columns
         ]
 
         if missing:
 
             st.error(
-                f"Dealer file is missing: {missing}"
+                f"Dealer File Missing Columns : {missing}"
             )
 
             st.stop()
 
-    # -------------------------------
+    # ======================================================
     # Generate Reports & Send Emails
-    # -------------------------------
+    # ======================================================
 
     if (
         sales_df is not None
@@ -146,44 +162,130 @@ def show_dashboard():
     ):
 
         if st.button(
-            "Generate Reports & Send Emails",
+            "🚀 Generate Reports & Send Emails",
             use_container_width=True
         ):
-            
-            with st.spinner(
-                "Generating reports and sending emails..."
-            ):
 
-                progress_bar = st.progress(0)
+            # ===============================================
+            # Stage 1
+            # ===============================================
 
-                status_text = st.empty()
+            st.subheader("📄 Stage 1 : Report Generation")
 
-                summary_placeholder = st.empty()
+            stage1_status = st.empty()
 
-                results = []
+            with st.spinner("Generating Dealer Reports..."):
 
-                start_time = time.time()
+                stage1_status.info(
+                    "Generating Excel Reports..."
+                )
+
+                start_generation = time.time()
 
                 generated_reports, output_folder = generate_reports(
                     sales_df,
                     dealer_df
-                )    
+                )
 
-            generated_reports, output_folder = generate_reports(
-                sales_df,
-                dealer_df
+                generation_time = (
+                    time.time() - start_generation
+                )
+
+            stage1_status.success(
+                f"✅ Successfully Generated {len(generated_reports)} Reports"
             )
-            
+
+            st.info(
+                f"Generation Time : {generation_time:.2f} seconds"
+            )
+
+            st.divider()
+
+            # ===============================================
+            # Stage 2 : Send Emails
+            # ===============================================
+
+            st.subheader("📧 Stage 2 : Sending Emails")
+
+            progress_bar = st.progress(0)
+
+            processed_text = st.empty()
+            dealer_text = st.empty()
+            email_text = st.empty()
+
+            col1, col2, col3 = st.columns(3)
+
+            success_metric = col1.empty()
+            failed_metric = col2.empty()
+            skipped_metric = col3.empty()
+
+            elapsed_text = st.empty()
+            eta_text = st.empty()
+
             total_reports = len(generated_reports)
 
+            processed = 0
             success_count = 0
+            failed_count = 0
+            skipped_count = 0
+
+            start_time = time.time()
 
             for report in generated_reports:
 
+                processed += 1
+
+                progress = processed / total_reports
+
+                progress_bar.progress(progress)
+
+                processed_text.markdown(
+                    f"### {processed} / {total_reports} Dealers Processed"
+                )
+
+                dealer_text.write(
+                    f"**Current Dealer :** {report['dealer_name']}"
+                )
+
+                email_text.write(
+                    f"**Current Email :** {report['email'] if report['email'] else 'No Email Available'}"
+                )
+
+                elapsed = time.time() - start_time
+
+                avg_time = elapsed / processed
+
+                eta = avg_time * (total_reports - processed)
+
+                elapsed_text.write(
+                    f"⏱ Elapsed Time : {int(elapsed // 60)}m {int(elapsed % 60)}s"
+                )
+
+                eta_text.write(
+                    f"⌛ Estimated Time Remaining : {int(eta // 60)}m {int(eta % 60)}s"
+                )
+
+                # -----------------------------------
+                # No Email
+                # -----------------------------------
+
                 if report["email"] is None:
 
-                    st.warning(
-                        f"No email found for {report['dealer_name']}"
+                    skipped_count += 1
+
+                    success_metric.metric(
+                        "Success",
+                        success_count
+                    )
+
+                    failed_metric.metric(
+                        "Failed",
+                        failed_count
+                    )
+
+                    skipped_metric.metric(
+                        "Skipped",
+                        skipped_count
                     )
 
                     continue
@@ -191,13 +293,13 @@ def show_dashboard():
                 subject = "Dealer Report"
 
                 body = f"""
-Dear {report['dealer_name']},
+            Dear {report['dealer_name']},
 
-Please find attached your report.
+            Please find attached your Dealer Report.
 
-Regards,
-TVS Motor
-"""
+            Regards,
+            TVS Motor
+            """
 
                 try:
 
@@ -212,22 +314,83 @@ TVS Motor
 
                     success_count += 1
 
-                    st.success(
-                        f"Email sent to {report['dealer_name']}"
-                    )
+                except Exception:
 
-                except Exception as e:
+                    failed_count += 1
 
-                    st.error(
-                        f"Failed to send email to {report['dealer_name']}"
-                    )
+                success_metric.metric(
+                    "Success",
+                    success_count
+                )
 
-                    st.exception(e)
+                failed_metric.metric(
+                    "Failed",
+                    failed_count
+                )
 
-            st.success(
-                f"{success_count} email(s) sent successfully."
+                skipped_metric.metric(
+                    "Skipped",
+                    skipped_count
+                )
+
+            # ===============================================
+            # Completed
+            # ===============================================
+
+            progress_bar.progress(1.0)
+
+            total_time = time.time() - start_time
+
+            st.divider()
+
+            st.success("🎉 Dealer Automation Completed Successfully")
+
+            summary1, summary2, summary3, summary4 = st.columns(4)
+
+            summary1.metric(
+                "Total",
+                total_reports
+            )
+
+            summary2.metric(
+                "Success",
+                success_count
+            )
+
+            summary3.metric(
+                "Failed",
+                failed_count
+            )
+
+            summary4.metric(
+                "Skipped",
+                skipped_count
             )
 
             st.info(
-                f"Reports were generated in:\n{output_folder}"
+                f"""
+            📁 Reports Location
+
+            {output_folder}
+            """
             )
+
+            st.write(
+                f"**Total Email Processing Time :** {int(total_time//60)}m {int(total_time%60)}s"
+            )
+
+            # ===============================================
+            # Delete Temporary Files
+            # ===============================================
+
+            try:
+
+                shutil.rmtree(output_folder)
+
+                st.success("🗑️ Temporary files deleted successfully.")
+
+            except Exception as e:
+
+                st.warning(
+                    f"Could not delete temporary files: {e}"
+                )
