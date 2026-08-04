@@ -1,6 +1,7 @@
 import streamlit as st
 from auth import authenticate
 from modules.dashboard import show_dashboard
+from modules.admin_dashboard import show_admin_dashboard
 
 st.set_page_config(
     page_title="Dealer Automation",
@@ -13,6 +14,12 @@ st.set_page_config(
 # -----------------------------
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
+
+if "username" not in st.session_state:
+    st.session_state.username = ""
+
+if "role" not in st.session_state:
+    st.session_state.role = ""
 
 # -----------------------------
 # Login Page
@@ -30,9 +37,14 @@ if not st.session_state.logged_in:
 
     if st.button("Login"):
 
-        if authenticate(username, password):
+        user = authenticate(username, password)
+
+        if user:
 
             st.session_state.logged_in = True
+            st.session_state.username = user["username"]
+            st.session_state.role = user["role"]
+
             st.rerun()
 
         else:
@@ -44,4 +56,10 @@ if not st.session_state.logged_in:
 # -----------------------------
 else:
 
-    show_dashboard()
+    if st.session_state.role == "admin":
+
+        show_admin_dashboard()
+
+    else:
+
+        show_dashboard()

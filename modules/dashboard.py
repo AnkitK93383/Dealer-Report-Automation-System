@@ -5,6 +5,7 @@ import streamlit as st
 from utils.excel_reader import read_excel
 from utils.report_generator import generate_reports
 from utils.email_sender import send_email
+from utils.logger import log_usage
 
 
 def show_dashboard():
@@ -14,6 +15,9 @@ def show_dashboard():
     # ======================================================
 
     st.title("📊 Dealer Automation Dashboard")
+
+    st.sidebar.markdown(f"### 👋 Welcome {st.session_state.username}")
+
 
     # ======================================================
     # Logout
@@ -377,6 +381,16 @@ def show_dashboard():
 
             st.write(
                 f"**Total Email Processing Time :** {int(total_time//60)}m {int(total_time%60)}s"
+            )
+
+            log_usage(
+                username=st.session_state.username,
+                reports=total_reports,
+                emails_sent=success_count,
+                success=success_count,
+                failed=failed_count,
+                skipped=skipped_count,
+                duration=total_time
             )
 
             # ===============================================

@@ -12,6 +12,6 @@ def authenticate(username, password):
             user["username"] == username
             and user["password"] == password
         ):
-            return True
+            return user
 
-    return False
+    return None
