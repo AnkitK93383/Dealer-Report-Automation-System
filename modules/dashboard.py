@@ -14,7 +14,7 @@ def show_dashboard():
     # Page Title
     # ======================================================
 
-    st.title("📊 Dealer Report Automation System")
+    st.title("📊 Dealer Report Automation ")
 
     # Instructions
     st.info("""
