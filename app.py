@@ -3,6 +3,7 @@ from auth import authenticate
 from modules.dashboard import show_dashboard
 from modules.admin_dashboard import show_admin_dashboard
 
+
 st.set_page_config(
     page_title="Dealer Automation",
     page_icon="📧",
