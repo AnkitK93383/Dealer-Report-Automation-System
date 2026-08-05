@@ -14,7 +14,7 @@ def show_dashboard():
     # Page Title
     # ======================================================
 
-    st.title("📊 Dealer Automation Dashboard")
+    st.title("📊 Dealer Report Automation System")
 
     # Instructions
     st.info("""
@@ -40,7 +40,7 @@ def show_dashboard():
         st.rerun()
 
     st.write(
-        "Upload your distribution file and dealer master to generate dealer-wise reports and send them via email."
+        "Upload your distribution file and dealer details file to generate dealer-wise reports and send them via email."
     )
 
     st.divider()
