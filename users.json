@@ -1,17 +1,17 @@
 [
     {
         "username": "Rahul",
-        "password": "rahul@123",
+        "password": "$2b$12$6.Ua0Md6CLQflhJJpD8Y1eyZHUd131NNEXc8z0WVLITv4puOgRgg2",
         "role": "user"
     },
     {
         "username": "Amit",
-        "password": "amit@123",
+        "password": "$2b$12$N4k2IOfvENj1T4eXfdUP.u8eug08rCM9uq9caJaXPdbM4Lvks/BCC",
         "role": "user"
     },
     {
         "username": "Ankit",
-        "password": "123@456",
+        "password": "$2b$12$wF2Gwv0pmYweIXz4Y1A5w.he4O3mJkt5uC.9EGeJYOiT2Bkr3m0tq",
         "role": "admin"
     }
 ]

@@ -1,4 +1,5 @@
 import json
+import bcrypt
 
 
 def authenticate(username, password):
@@ -10,7 +11,10 @@ def authenticate(username, password):
 
         if (
             user["username"] == username
-            and user["password"] == password
+            and bcrypt.checkpw(
+                password.encode("utf-8"),
+                user["password"].encode("utf-8")
+            )
         ):
             return user
 
