@@ -1,7 +1,22 @@
+# Virtual environment
 .venv/
+venv/
+
+# Python
 __pycache__/
 *.pyc
+
+# Secrets
 .env
+.streamlit/secrets.toml
+
+# Runtime data
+users.jsonl
+logs/
 temp/
-output/
 uploads/
+output/
+
+# Generated files
+*.xlsx
+*.csv
