@@ -11,8 +11,6 @@ __pycache__/
 .streamlit/secrets.toml
 
 # Runtime data
-users.jsonl
-users.json
 logs/
 temp/
 uploads/
