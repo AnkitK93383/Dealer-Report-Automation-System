@@ -16,6 +16,17 @@ def show_dashboard():
 
     st.title("📊 Dealer Automation Dashboard")
 
+    # Instructions
+    st.info("""
+    📌 **Upload Instructions**
+
+    - **Dealer Distribution File (.xlsx):** Must contain a **Dealer_Code** column with values matching the Dealer Details file.
+    - **Dealer Details File (.xlsx):** Must contain **Dealer_Code**, **Dealer_Name**, and **Email** columns.
+    - Keep the column names exactly as specified and do not leave mandatory fields blank.
+    - File names can be anything, but both files must be in **.xlsx** format and have matching **Dealer_Code** values.
+    """)
+
+
     st.sidebar.markdown(f"### 👋 Welcome {st.session_state.username}")
 
 
